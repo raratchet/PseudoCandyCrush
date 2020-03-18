@@ -14,6 +14,7 @@ bool Gem::operator==(Gem gem)
 		return false;
 }
 
+
 char Gem::GetType()
 {
 	return type;

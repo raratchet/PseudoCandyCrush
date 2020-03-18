@@ -115,7 +115,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	return TRUE;
 }
 
-HICON cerdo, gasho;
+//HICON cerdo, gasho;
 Board gameB;
 
 
@@ -154,8 +154,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		//brush = CreateSolidBrush(RGB(0,0,0));
 		// carga de los íconos
-		cerdo = LoadIcon(hInst, MAKEINTRESOURCE(CERDO));
-		gasho = LoadIcon(hInst, MAKEINTRESOURCE(GASHO));
+		//cerdo = LoadIcon(hInst, MAKEINTRESOURCE(CERDO));
+		//gasho = LoadIcon(hInst, MAKEINTRESOURCE(GASHO));
 	}
 	break;
 	case WM_LBUTTONDOWN:
@@ -175,7 +175,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				if (gameB.GetCell(hWnd, index, &rect))
 				{
 					//FillRect(hdc,&rect ,(HBRUSH)GetStockObject(BLACK_BRUSH));
-					DrawIcon(hdc, rect.left, rect.top, cerdo);
+					//DrawIcon(hdc, rect.left, rect.top, cerdo);
 				}
 			}
 			ReleaseDC(hWnd, hdc);
@@ -200,8 +200,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		RECT rc;
 		gameB.DrawBoard(hWnd,hdc,&rc);
 		std::list<Gem*> gems = gameB.GetPartnerGems(0,0);
-		//int a = gameB.EmptyNeighboards(0, 7);
-		//gameB.MoveGems(0, 7);
+		int a = gameB.EmptyNeighboards(0, 7);
+		gameB.MoveGems(0, 7);
 		EndPaint(hWnd, &ps);
 	}
 	break;

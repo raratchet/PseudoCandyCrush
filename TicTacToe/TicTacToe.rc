@@ -32,9 +32,6 @@ LANGUAGE LANG_SPANISH, SUBLANG_SPANISH_MEXICAN
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-CERDO                   ICON                    "C:\\Users\\Maximiliano\\Downloads\\cerdo_icon_134879.ico"
-
-GASHO                   ICON                    "C:\\Users\\Maximiliano\\Downloads\\gallo_icon_134881.ico"
 
 #endif    // Español (México) resources
 /////////////////////////////////////////////////////////////////////////////

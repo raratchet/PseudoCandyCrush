@@ -2,15 +2,16 @@
 #include "framework.h"
 #include "Gem.h"
 #include <list>
+#include <vector>
 
-using std::list;
+using std::list; using std::vector;
 
 class Board
 {
 private:
 	const int CELL_SIZE = 40;
 	const int CELL_COUNT = 8;
-	Gem** gems;
+	vector<vector<Gem>> gems;
 
 public:
 	Board();
@@ -29,7 +30,7 @@ public:
 
 	int GetCellCount();
 
-	Gem GetGemAt(int x, int y);
+	Gem* GetGemAt(int x, int y);
 
 	list<Gem*> GetPartnerGems(int x, int y);
 

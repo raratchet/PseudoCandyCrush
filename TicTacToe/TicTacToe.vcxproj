@@ -167,8 +167,6 @@
     <ResourceCompile Include="TicTacToe.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\..\..\Downloads\cerdo_icon_134879.ico" />
-    <Image Include="..\..\..\..\Downloads\gallo_icon_134881.ico" />
     <Image Include="small.ico" />
     <Image Include="TicTacToe.ico" />
   </ItemGroup>

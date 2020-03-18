@@ -57,11 +57,5 @@
     <Image Include="TicTacToe.ico">
       <Filter>Archivos de recursos</Filter>
     </Image>
-    <Image Include="..\..\..\..\Downloads\cerdo_icon_134879.ico">
-      <Filter>Archivos de recursos</Filter>
-    </Image>
-    <Image Include="..\..\..\..\Downloads\gallo_icon_134881.ico">
-      <Filter>Archivos de recursos</Filter>
-    </Image>
   </ItemGroup>
 </Project>

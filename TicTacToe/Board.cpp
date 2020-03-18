@@ -2,14 +2,7 @@
 
 Board::Board() 
 {
-	gems = new Gem* [CELL_COUNT];
-	for (unsigned short i = 0; i < CELL_COUNT; i++)
-	{
-		gems[i] = new Gem[CELL_COUNT];
-	}
-
-	//gems[0][1].SetType(10);
-	gems[1][0].SetType(10);
+	gems = vector<vector<Gem>>(CELL_COUNT, vector<Gem>(CELL_COUNT));
 }
 
 void Board::DrawBoard(HWND hWnd,HDC hdc,RECT* rc)
@@ -107,9 +100,9 @@ int Board::GetCellCount()
 	return CELL_COUNT;
 }
 
-Gem Board::GetGemAt(int x, int y)
+Gem* Board::GetGemAt(int x, int y)
 {
-	return gems[y][x];
+	return &gems[y][x];
 }
 
 list<Gem*> Board::GetPartnerGems(int x, int y)
@@ -126,35 +119,36 @@ void Board::LookForPartners(int x , int y, list<Gem*>* partners)
 		{
 			try 
 			{
-				Gem* gem = &GetGemAt(x, y);
+				Gem* gem = GetGemAt(x, y);
+				gems;
 				if (!gem->Visited())
 				{
 					gem->SetVisited(true);
 					partners->push_back(gem);
 					if (x + 1 < CELL_COUNT)
 					{
-						if (*gem == GetGemAt(x + 1, y) && GetGemAt(x + 1, y).Visited() == false)
+						if (*gem == *GetGemAt(x + 1, y))
 						{
 							LookForPartners(x + 1, y, partners);
 						}
 					}
 					if (y + 1 < CELL_COUNT)
 					{
-						if (*gem == GetGemAt(x, y + 1) && GetGemAt(x, y + 1).Visited() == false)
+						if (*gem == *GetGemAt(x, y + 1))
 						{
 							LookForPartners(x, y + 1, partners);
 						}
 					}
 					if (x - 1 >= 0)
 					{
-						if (*gem == GetGemAt(x - 1, y) && GetGemAt(x - 1, y).Visited() == false)
+						if (*gem == *GetGemAt(x - 1, y))
 						{
 							LookForPartners(x - 1, y, partners);
 						}
 					}
 					if (y - 1 >= 0)
 					{
-						if (*gem == GetGemAt(x, y - 1) && GetGemAt(x, y - 1).Visited() == false)
+						if (*gem == *GetGemAt(x, y - 1))
 						{
 							LookForPartners(x, y - 1, partners);
 						}
@@ -176,10 +170,10 @@ void Board::MoveGems(int x, int y)
 	if(y < CELL_COUNT)
 		if (y >= 0)
 		{
-			Gem* gem = &GetGemAt(x, y);
+			Gem* gem = GetGemAt(x, y);
 			if (y == 0)
 			{
-				Gem* gemBelow = &GetGemAt(x, y + 1);
+				Gem* gemBelow = GetGemAt(x, y + 1);
 				gemBelow->SetType(gem->GetType());
 				gem->SetType(0); //Generar un nuevo type;
 			}
@@ -188,7 +182,7 @@ void Board::MoveGems(int x, int y)
 				MoveGems(x, y - 1);
 				if (!(y + 1 >= CELL_COUNT))
 				{
-					Gem* gemBelow = &GetGemAt(x, y + 1);
+					Gem* gemBelow = GetGemAt(x, y + 1);
 					gemBelow->SetType(gem->GetType());
 				}
 			}
@@ -199,7 +193,7 @@ int Board::EmptyNeighboards(int x, int y)
 {
 	if (y >= 0 && y < CELL_COUNT)
 	{
-		if (GetGemAt(x, y).GetType() == 0)
+		if (GetGemAt(x, y)->GetType() == '0')
 			return 1 + EmptyNeighboards(x, y - 1);
 	}
 
