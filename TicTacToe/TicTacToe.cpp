@@ -1,12 +1,15 @@
 // TicTacToe.cpp : Define el punto de entrada de la aplicación.
 //
 
-#include "framework.h"
+#include <Windows.h>
 #include <windowsx.h>
+#include "framework.h"
 #include "TicTacToe.h"
 #include "Board.h"
 #include <list>
-
+#include <vector>
+#include <gdiplus.h>
+#pragma comment (lib,"gdiplus.lib")
 #define MAX_LOADSTRING 100
 
 // Variables globales:
@@ -34,6 +37,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadStringW(hInstance, IDC_TICTACTOE, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
+
+
+	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+	ULONG_PTR gdiplusToken;
+	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr);
 
 	// Realizar la inicialización de la aplicación:
 	if (!InitInstance(hInstance, nCmdShow))
@@ -117,6 +125,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 //HICON cerdo, gasho;
 Board gameB;
+vector<int> moves;
 
 
 //
@@ -171,12 +180,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			TextOut(hdc,xPos,yPos,temp,lstrlen(temp));
 			if (index != -1)
 			{
-				RECT rect;
-				if (gameB.GetCell(hWnd, index, &rect))
+				moves.push_back(index);
+				if (moves.size() >= 2)
 				{
-					//FillRect(hdc,&rect ,(HBRUSH)GetStockObject(BLACK_BRUSH));
-					//DrawIcon(hdc, rect.left, rect.top, cerdo);
+					gameB.PlayerMove(&moves);
+					//gameB.GenerateNewLevel();
+					
+					message = RDW_UPDATENOW;
 				}
+
 			}
 			ReleaseDC(hWnd, hdc);
 		}
@@ -198,10 +210,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		HDC hdc = BeginPaint(hWnd, &ps);
 		// TODO: Agregar cualquier código de dibujo que use hDC aquí...
 		RECT rc;
-		gameB.DrawBoard(hWnd,hdc,&rc);
-		std::list<Gem*> gems = gameB.GetPartnerGems(0,0);
-		int a = gameB.EmptyNeighboards(0, 7);
-		gameB.MoveGems(0, 7);
+
+		Gdiplus::Graphics gf(hdc);
+
+		gameB.DrawBoard(hWnd,hdc,&rc,&gf);
+
 		EndPaint(hWnd, &ps);
 	}
 	break;

@@ -1,12 +1,20 @@
 #include "Board.h"
+#include <iostream>
 
 Board::Board() 
 {
 	gems = vector<vector<Gem>>(CELL_COUNT, vector<Gem>(CELL_COUNT));
+
+	for (int x = 0; x < CELL_COUNT; x++)
+		for (int y = 0; y < CELL_COUNT; y++)
+			GetGemAt(x, y)->SetPos(x, y);
+
+	GenerateNewLevel();
 }
 
-void Board::DrawBoard(HWND hWnd,HDC hdc,RECT* rc)
+void Board::DrawBoard(HWND hWnd,HDC hdc,RECT* rc, Gdiplus::Graphics* graphics)
 {
+
 	if (GetGameBoardRect(hWnd, rc))
 	{
 		FillRect(hdc, rc, (HBRUSH)GetStockObject(WHITE_BRUSH));
@@ -21,6 +29,50 @@ void Board::DrawBoard(HWND hWnd,HDC hdc,RECT* rc)
 		//horizontales
 		DrawLine(hdc, rc->left, rc->top + CELL_SIZE * i, rc->right, rc->top + CELL_SIZE * i);
 	}
+	DrawGemColor(rc, graphics);
+}
+
+void Board::DrawGemColor(RECT* rc, Gdiplus::Graphics* graphics)
+{
+	for(int x = 0; x < CELL_COUNT;x++)
+		for (int y = 0; y < CELL_COUNT; y++)
+		{
+			Gem* gem = GetGemAt(x, y);
+			switch (gem->GetType())
+			{
+			case '0':
+				break;
+			case 'r':
+			{
+				Gdiplus::Bitmap bmp0(L"a.png");
+				graphics->DrawImage(&bmp0, (int)rc->left + 15 + CELL_SIZE * x, (int)rc->top + 15 + CELL_SIZE * y, 10, 10);
+			}
+			break;
+			case 'v':
+			{
+				Gdiplus::Bitmap bmp0(L"b.png");
+				graphics->DrawImage(&bmp0, (int)rc->left + 15 + CELL_SIZE * x, (int)rc->top + 15 + CELL_SIZE * y, 10, 10);
+			}
+			break;
+			case 'a':
+			{
+				Gdiplus::Bitmap bmp0(L"c.png");
+				graphics->DrawImage(&bmp0, (int)rc->left + 15 + CELL_SIZE * x, (int)rc->top + 15 + CELL_SIZE * y, 10, 10);
+			}
+			break;
+			case 'b':
+			{
+				Gdiplus::Bitmap bmp0(L"d.png");
+				graphics->DrawImage(&bmp0, (int)rc->left + 15 + CELL_SIZE * x, (int)rc->top + 15 + CELL_SIZE * y, 10, 10);
+			}
+			break;
+			default:
+				break;
+			}
+
+			gem = 0;
+			delete gem;
+		}
 }
 
 BOOL Board::GetGameBoardRect(HWND hWnd, RECT* pRect)
@@ -109,9 +161,11 @@ list<Gem*> Board::GetPartnerGems(int x, int y)
 {
 	list<Gem*> tmp;
 	LookForPartners(x, y, &tmp);
+	UnSeeGems();
 	return tmp;
 }
 
+//Busca todos los vecinos del mismo tipo
 void Board::LookForPartners(int x , int y, list<Gem*>* partners)
 {
 	if(x >= 0 && y >= 0)
@@ -120,7 +174,6 @@ void Board::LookForPartners(int x , int y, list<Gem*>* partners)
 			try 
 			{
 				Gem* gem = GetGemAt(x, y);
-				gems;
 				if (!gem->Visited())
 				{
 					gem->SetVisited(true);
@@ -154,6 +207,8 @@ void Board::LookForPartners(int x , int y, list<Gem*>* partners)
 						}
 					}
 				}
+				gem = 0;
+				delete gem;
 			}
 			catch (std::exception& e)
 			{
@@ -164,31 +219,42 @@ void Board::LookForPartners(int x , int y, list<Gem*>* partners)
 
 }
 
-//Fuga de memoria por apuntadores?
-void Board::MoveGems(int x, int y)
+//Recorre Todas Gemas un espacio hacia abajo en una columna
+// param i es la cantidad de espacios que lo vamos a mover
+void Board::MoveGems(int x, int y, int i)
 {
-	if(y < CELL_COUNT)
-		if (y >= 0)
+	if(y < CELL_COUNT && x < CELL_COUNT)
+		if (y >= 0 && x >= 0)
 		{
-			Gem* gem = GetGemAt(x, y);
-			if (y == 0)
+			Gem* gem1;
+			Gem* gem2;
+
+			for (int a = 0; a < i; a++)
 			{
-				Gem* gemBelow = GetGemAt(x, y + 1);
-				gemBelow->SetType(gem->GetType());
-				gem->SetType(0); //Generar un nuevo type;
-			}
-			else
-			{
-				MoveGems(x, y - 1);
-				if (!(y + 1 >= CELL_COUNT))
+				if ((y - a - i) >= 0)
 				{
-					Gem* gemBelow = GetGemAt(x, y + 1);
-					gemBelow->SetType(gem->GetType());
+					gem1 = GetGemAt(x, y - a);
+					gem2 = GetGemAt(x, y - a - i);
+
+					*gem2 >> gem1;
+
+					gem2->GenerateNewType();
+				}else
+				{
+					gem1 = GetGemAt(x, y - a);
+					gem1->GenerateNewType();
 				}
+
 			}
+			gem1 = 0;
+			gem2 = 0;
+
+			delete gem1;
+			delete gem2;
 		}
 }
 
+//Cuenta la cantidad de Gems vacias hay sobre una posición
 int Board::EmptyNeighboards(int x, int y)
 {
 	if (y >= 0 && y < CELL_COUNT)
@@ -198,4 +264,85 @@ int Board::EmptyNeighboards(int x, int y)
 	}
 
 	return 0;
+}
+
+void Board::GenerateNewLevel()
+{
+	for (int x = 0; x < CELL_COUNT; x++)
+		for (int y = 0; y < CELL_COUNT; y++)
+		{
+			GetGemAt(x, y)->GenerateNewType();
+		}
+}
+
+//Lógica de un turno
+void Board::PlayerMove(vector<int>* moves)
+{
+	int click1 = moves->at(0);
+	int click2 = moves->at(1);
+	moves->clear();
+
+	if (click1 != click2)
+	{
+		int c1X = click1 % CELL_COUNT;
+		int c1Y = click1 / CELL_COUNT;
+
+		int c2X = click2 % CELL_COUNT;
+		int c2Y = click2 / CELL_COUNT;
+
+		Gem* gem1 = GetGemAt(c1X, c1Y);
+		Gem* gem2 = GetGemAt(c2X, c2Y);
+
+		//Si estan contiguas
+		{
+			DestoyGems(c1X, c1Y, gem1, gem2);
+			DestoyGems(c2X, c2Y, gem1, gem2);
+
+		}
+
+		gem1 = 0;
+		gem2 = 0;
+		delete gem1;
+		delete gem2;
+	}
+
+
+}
+
+void Board::DestoyGems(int x, int y, Gem* gem1, Gem* gem2)
+{
+	//Swap;
+	*gem1 >> gem2;
+
+
+	list<Gem*> gemsi = GetPartnerGems(x, y);
+	if (gemsi.size() >= 3)
+	{
+		//Las marca como gems vacias - "Las elimina"
+		for (Gem* gem : gemsi)
+		{
+			gem->SetType('0');
+		}
+
+		for (Gem* gem : gemsi)
+		{
+			if (gem->GetType() == '0')
+			{
+				MoveGems(gem->GetX(), gem->GetY(), EmptyNeighboards(gem->GetX(), gem->GetY()));
+			}
+		}
+
+
+	}
+	else
+	{
+		*gem1 >> gem2;
+	}
+}
+
+void Board::UnSeeGems()
+{
+	for (int x = 0; x < CELL_COUNT; x++)
+		for (int y = 0; y < CELL_COUNT; y++)
+			GetGemAt(x, y)->SetVisited(false);
 }

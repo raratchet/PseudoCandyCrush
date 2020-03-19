@@ -1,8 +1,11 @@
 #pragma once
+#include <Windows.h>
 #include "framework.h"
 #include "Gem.h"
 #include <list>
 #include <vector>
+#include <gdiplus.h>
+#pragma comment (lib,"gdiplus.lib")
 
 using std::list; using std::vector;
 
@@ -16,7 +19,7 @@ private:
 public:
 	Board();
 
-	void DrawBoard(HWND hWnd, HDC hdc, RECT* rc);
+	void DrawBoard(HWND hWnd, HDC hdc, RECT* rc, Gdiplus::Graphics* graphics);
 
 	BOOL GetGameBoardRect(HWND hWnd, RECT* pRect);
 
@@ -36,8 +39,19 @@ public:
 
 	void LookForPartners(int x, int y, list<Gem*>* list);
 
-	void MoveGems(int x, int y);
+	void MoveGems(int x, int y , int i);
 
 	int EmptyNeighboards(int x ,int y);
+
+	void GenerateNewLevel();
+
+	void PlayerMove(vector<int>* moves);
+
+private:
+	void DrawGemColor(RECT* rc,Gdiplus::Graphics* graphics);
+
+	void DestoyGems(int,int,Gem*,Gem*);
+
+	void UnSeeGems();
 };
 
