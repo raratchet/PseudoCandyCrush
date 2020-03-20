@@ -14,6 +14,8 @@ class Board
 private:
 	const int CELL_SIZE = 40;
 	const int CELL_COUNT = 8;
+	const int IMAGE_SIZE = 20;
+	const int IMAGE_OFFSET = 10;
 	vector<vector<Gem>> gems;
 
 public:
@@ -35,9 +37,14 @@ public:
 
 	Gem* GetGemAt(int x, int y);
 
-	list<Gem*> GetPartnerGems(int x, int y);
+	template <class CONTAINER>
+	CONTAINER GetPartnerGems(int x, int y);
 
-	void LookForPartners(int x, int y, list<Gem*>* list);
+	template <class CONTAINER>
+	void LookForPartners(int x, int y, CONTAINER* list);
+
+	template <class CONTAINER>
+	CONTAINER GetGemsInRadius(int x, int y, int radius);
 
 	void MoveGems(int x, int y , int i);
 
@@ -47,11 +54,16 @@ public:
 
 	void PlayerMove(vector<int>* moves);
 
+	template <class CONTAINER>
+	void DestoyGems(CONTAINER*);
+
+	void CallPower(HWND hWnd,int rawX, int rawY);
+
 private:
 	void DrawGemColor(RECT* rc,Gdiplus::Graphics* graphics);
 
-	void DestoyGems(int,int,Gem*,Gem*);
-
 	void UnSeeGems();
+
+	void GenerateNewGem(Gem* gem);
 };
 

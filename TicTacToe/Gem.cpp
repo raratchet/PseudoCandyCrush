@@ -26,6 +26,7 @@ int Gem::GetY()
 	return y;
 }
 
+//Compara si dos gemas son del mismo tipo
 bool Gem::operator==(Gem gem)
 {
 	if (type == gem.GetType())
@@ -33,7 +34,6 @@ bool Gem::operator==(Gem gem)
 	else
 		return false;
 }
-
 
 char Gem::GetType()
 {
@@ -55,6 +55,7 @@ void Gem::SetVisited(bool state)
 	visited = state;
 }
 
+//Hace un swap de tipos entre dos gemas
 void Gem::operator>>(Gem* gem)
 {
 	char tmp;
@@ -63,15 +64,26 @@ void Gem::operator>>(Gem* gem)
 	gem->SetType(tmp);
 }
 
+//Revisa si una gema esta contigua con otra
 bool Gem::Contiguous(Gem gem)
 {
-	return 0;
+	if(x + 1 == gem.GetX() && y == gem.GetY())
+		return true;
+	if (x - 1 == gem.GetX() && y == gem.GetY())
+		return true;
+	if (x == gem.GetX() && y + 1 == gem.GetY())
+		return true;
+	if (x == gem.GetX() && y - 1 == gem.GetY())
+		return true;
+	
+	return false;
 }
 
+//Genera un nuevo tipo random para la gema
 void Gem::GenerateNewType()
 {
 	//srand(std::time(nullptr));
-	int tmp = rand() % 4;
+	int tmp = rand() % 6;
 
 	switch (tmp)
 	{
@@ -87,8 +99,15 @@ void Gem::GenerateNewType()
 	case 3:
 		type = 'b';
 		break;
+	case 4:
+		type = 'm';
+		break;
+	case 5:
+		type = 'n';
+		break;
 	default:
 		type = '0';
 		break;
 	}
 }
+

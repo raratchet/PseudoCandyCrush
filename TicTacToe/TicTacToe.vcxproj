@@ -155,6 +155,7 @@
     <ClInclude Include="Board.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Gem.h" />
+    <ClInclude Include="PowerUp.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TicTacToe.h" />
@@ -162,6 +163,7 @@
   <ItemGroup>
     <ClCompile Include="Board.cpp" />
     <ClCompile Include="Gem.cpp" />
+    <ClCompile Include="PowerUp.cpp" />
     <ClCompile Include="TicTacToe.cpp" />
   </ItemGroup>
   <ItemGroup>

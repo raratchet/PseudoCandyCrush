@@ -1,5 +1,6 @@
 #include "Board.h"
 #include <iostream>
+#include "PowerUp.h"
 
 Board::Board() 
 {
@@ -32,6 +33,7 @@ void Board::DrawBoard(HWND hWnd,HDC hdc,RECT* rc, Gdiplus::Graphics* graphics)
 	DrawGemColor(rc, graphics);
 }
 
+//Dibuja un sprite específico dependiendo el tipo de gema alojado en una cada casilla
 void Board::DrawGemColor(RECT* rc, Gdiplus::Graphics* graphics)
 {
 	for(int x = 0; x < CELL_COUNT;x++)
@@ -45,25 +47,37 @@ void Board::DrawGemColor(RECT* rc, Gdiplus::Graphics* graphics)
 			case 'r':
 			{
 				Gdiplus::Bitmap bmp0(L"a.png");
-				graphics->DrawImage(&bmp0, (int)rc->left + 15 + CELL_SIZE * x, (int)rc->top + 15 + CELL_SIZE * y, 10, 10);
+				graphics->DrawImage(&bmp0, (int)rc->left + IMAGE_OFFSET + CELL_SIZE * x, (int)rc->top + IMAGE_OFFSET + CELL_SIZE * y, IMAGE_SIZE, IMAGE_SIZE);
 			}
 			break;
 			case 'v':
 			{
 				Gdiplus::Bitmap bmp0(L"b.png");
-				graphics->DrawImage(&bmp0, (int)rc->left + 15 + CELL_SIZE * x, (int)rc->top + 15 + CELL_SIZE * y, 10, 10);
+				graphics->DrawImage(&bmp0, (int)rc->left + IMAGE_OFFSET + CELL_SIZE * x, (int)rc->top + IMAGE_OFFSET + CELL_SIZE * y, IMAGE_SIZE, IMAGE_SIZE);
 			}
 			break;
 			case 'a':
 			{
 				Gdiplus::Bitmap bmp0(L"c.png");
-				graphics->DrawImage(&bmp0, (int)rc->left + 15 + CELL_SIZE * x, (int)rc->top + 15 + CELL_SIZE * y, 10, 10);
+				graphics->DrawImage(&bmp0, (int)rc->left + IMAGE_OFFSET + CELL_SIZE * x, (int)rc->top + IMAGE_OFFSET + CELL_SIZE * y, IMAGE_SIZE, IMAGE_SIZE);
 			}
 			break;
 			case 'b':
 			{
 				Gdiplus::Bitmap bmp0(L"d.png");
-				graphics->DrawImage(&bmp0, (int)rc->left + 15 + CELL_SIZE * x, (int)rc->top + 15 + CELL_SIZE * y, 10, 10);
+				graphics->DrawImage(&bmp0, (int)rc->left + IMAGE_OFFSET + CELL_SIZE * x, (int)rc->top + IMAGE_OFFSET + CELL_SIZE * y, IMAGE_SIZE, IMAGE_SIZE);
+			}
+			break;
+			case 'm':
+			{
+				Gdiplus::Bitmap bmp0(L"e.png");
+				graphics->DrawImage(&bmp0, (int)rc->left + IMAGE_OFFSET + CELL_SIZE * x, (int)rc->top + IMAGE_OFFSET + CELL_SIZE * y, IMAGE_SIZE, IMAGE_SIZE);
+			}
+			break;
+			case 'n':
+			{
+				Gdiplus::Bitmap bmp0(L"f.png");
+				graphics->DrawImage(&bmp0, (int)rc->left + IMAGE_OFFSET + CELL_SIZE * x, (int)rc->top + IMAGE_OFFSET + CELL_SIZE * y, IMAGE_SIZE, IMAGE_SIZE);
 			}
 			break;
 			default:
@@ -157,16 +171,20 @@ Gem* Board::GetGemAt(int x, int y)
 	return &gems[y][x];
 }
 
-list<Gem*> Board::GetPartnerGems(int x, int y)
+//Devuelve un contenedor secuencial que incluye a todas las gemas
+//iguales adyacentes a la gema en x , y ¿Se entiende?
+template <class CONTAINER>
+CONTAINER Board::GetPartnerGems(int x, int y)
 {
-	list<Gem*> tmp;
-	LookForPartners(x, y, &tmp);
+	CONTAINER tmp;
+	LookForPartners<CONTAINER>(x, y, &tmp);
 	UnSeeGems();
 	return tmp;
 }
 
-//Busca todos los vecinos del mismo tipo
-void Board::LookForPartners(int x , int y, list<Gem*>* partners)
+//Busca todos los vecinos del mismo tipo y los guarda en un contenedor secuencial
+template <class CONTAINER>
+void Board::LookForPartners(int x , int y, CONTAINER* partners)
 {
 	if(x >= 0 && y >= 0)
 		if (x < CELL_COUNT && y < CELL_COUNT)
@@ -219,6 +237,26 @@ void Board::LookForPartners(int x , int y, list<Gem*>* partners)
 
 }
 
+//Devuelve un contenedor secuencial con todas las gemas en un radio a partir
+// de un x y
+template <class CONTAINER>
+CONTAINER Board::GetGemsInRadius(int x, int y, int radius)	
+{
+	CONTAINER tmp;
+
+	for (int i = x - radius; i <= x + radius; i++)
+	{
+		for (int j = y - radius; j <= y + radius; j++)
+		{
+			if (i < CELL_COUNT && j < CELL_COUNT)
+				if (i >= 0 && j >= 0)
+					tmp.push_back(GetGemAt(i,j));
+		}
+	}
+
+	return tmp;
+}
+
 //Recorre Todas Gemas un espacio hacia abajo en una columna
 // param i es la cantidad de espacios que lo vamos a mover
 void Board::MoveGems(int x, int y, int i)
@@ -238,11 +276,11 @@ void Board::MoveGems(int x, int y, int i)
 
 					*gem2 >> gem1;
 
-					gem2->GenerateNewType();
+					GenerateNewGem(gem2);
 				}else
 				{
 					gem1 = GetGemAt(x, y - a);
-					gem1->GenerateNewType();
+					GenerateNewGem(gem1);
 				}
 
 			}
@@ -266,12 +304,13 @@ int Board::EmptyNeighboards(int x, int y)
 	return 0;
 }
 
+// Genera un nuevo nivel colocando gemas nuevas en cada casilla
 void Board::GenerateNewLevel()
 {
 	for (int x = 0; x < CELL_COUNT; x++)
 		for (int y = 0; y < CELL_COUNT; y++)
 		{
-			GetGemAt(x, y)->GenerateNewType();
+			GetGemAt(x,y)->GenerateNewType();
 		}
 }
 
@@ -293,11 +332,17 @@ void Board::PlayerMove(vector<int>* moves)
 		Gem* gem1 = GetGemAt(c1X, c1Y);
 		Gem* gem2 = GetGemAt(c2X, c2Y);
 
-		//Si estan contiguas
+		if(gem1->Contiguous(*gem2))
 		{
-			DestoyGems(c1X, c1Y, gem1, gem2);
-			DestoyGems(c2X, c2Y, gem1, gem2);
+			*gem1 >> gem2;
 
+
+			list<Gem*> gemsi = GetPartnerGems<list<Gem*>>(c1X, c1Y);
+			if (gemsi.size() >= 3)
+				DestoyGems<list<Gem*>>(&gemsi);
+			else
+				*gem1 >> gem2;
+			//DestoyGems(c2X, c2Y, gem1, gem2);
 		}
 
 		gem1 = 0;
@@ -309,40 +354,81 @@ void Board::PlayerMove(vector<int>* moves)
 
 }
 
-void Board::DestoyGems(int x, int y, Gem* gem1, Gem* gem2)
+template <class CONTAINER>
+void Board::DestoyGems(CONTAINER* container)
 {
-	//Swap;
-	*gem1 >> gem2;
-
-
-	list<Gem*> gemsi = GetPartnerGems(x, y);
-	if (gemsi.size() >= 3)
+	//Las marca como gems vacias - "Las elimina"
+	for (auto it = container->begin(); it != container->end(); it++)
 	{
-		//Las marca como gems vacias - "Las elimina"
-		for (Gem* gem : gemsi)
-		{
-			gem->SetType('0');
-		}
 
-		for (Gem* gem : gemsi)
-		{
-			if (gem->GetType() == '0')
-			{
-				MoveGems(gem->GetX(), gem->GetY(), EmptyNeighboards(gem->GetX(), gem->GetY()));
-			}
-		}
-
-
+		(*it)->SetType('0');
 	}
-	else
+
+	for (auto it = container->begin(); it != container->end(); it++)
 	{
-		*gem1 >> gem2;
+		if ((*it)->GetType() == '0')
+		{
+			MoveGems((*it)->GetX(), (*it)->GetY(), EmptyNeighboards((*it)->GetX(), (*it)->GetY()));
+		}
 	}
+
 }
 
+//Coloca a todas las gemas como "No visitadas"
 void Board::UnSeeGems()
 {
 	for (int x = 0; x < CELL_COUNT; x++)
 		for (int y = 0; y < CELL_COUNT; y++)
 			GetGemAt(x, y)->SetVisited(false);
+}
+
+//Evita la generación de gemas contiguas repetidas en más de 3
+//No funciona la chingadera ;-;
+void Board::GenerateNewGem(Gem* gem)
+{
+	int tmp = 0;
+	gem->GenerateNewType();
+
+	int x = gem->GetX();
+	int y = gem->GetY();
+
+	if (x + 1 < CELL_COUNT)
+	{
+		if (*gem == *GetGemAt(x + 1, y))
+			tmp++;
+	}
+
+	if (y + 1 < CELL_COUNT)
+	{
+		if (*gem == *GetGemAt(x, y + 1))
+			tmp++;
+	}
+
+	if (x - 1 >= 0)
+	{
+		if (*gem == *GetGemAt(x - 1, y))
+			tmp++;
+	}
+
+	if (y - 1 >= 0)
+	{
+		if (*gem == *GetGemAt(x, y - 1))
+			tmp++;
+	}
+
+	if (tmp >= 3)
+	{
+		GenerateNewGem(gem);
+	}
+}
+
+void Board::CallPower(HWND hWnd,int rawX, int rawY)
+{
+	int index = GetNumber(hWnd, rawX, rawY);
+
+	int x = index % CELL_COUNT;
+	int y = index / CELL_COUNT;
+
+	PowerUp::Bomb(x, y, 1,this);
+
 }

@@ -9,6 +9,7 @@
 #include <list>
 #include <vector>
 #include <gdiplus.h>
+#include "PowerUp.h"
 #pragma comment (lib,"gdiplus.lib")
 #define MAX_LOADSTRING 100
 
@@ -184,13 +185,40 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				if (moves.size() >= 2)
 				{
 					gameB.PlayerMove(&moves);
-					//gameB.GenerateNewLevel();
-					
-					message = RDW_UPDATENOW;
+					InvalidateRect(hWnd, nullptr, false);
 				}
 
 			}
 			ReleaseDC(hWnd, hdc);
+		}
+	}
+	break;
+	case WM_RBUTTONDOWN:
+	{
+		short xPos = GET_X_LPARAM(lParam);
+		short yPos = GET_Y_LPARAM(lParam);
+		int index = gameB.GetNumber(hWnd, xPos, yPos);
+		HDC hdc = GetDC(hWnd);
+		if (hdc != NULL)
+		{
+			WCHAR temp[100];
+			wsprintf(temp, L"[%d]", index);
+			TextOut(hdc, xPos, yPos, temp, lstrlen(temp));
+			if (index != -1)
+			{
+
+				gameB.CallPower(hWnd,xPos,yPos);
+				InvalidateRect(hWnd, nullptr, false);
+
+			}
+			ReleaseDC(hWnd, hdc);
+		}
+	}
+	break;
+	case WM_KEYDOWN:
+	{
+		if (GetKeyState(VK_RETURN))
+		{
 		}
 	}
 	break;

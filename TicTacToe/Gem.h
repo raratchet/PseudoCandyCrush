@@ -2,7 +2,8 @@
 class Gem
 {
 private:
-	int x, y;
+	int x;
+	int	y;
 	char type;
 	bool visited;
 
