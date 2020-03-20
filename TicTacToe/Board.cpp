@@ -1,6 +1,7 @@
 #include "Board.h"
 #include <iostream>
 #include "PowerUp.h"
+#include <string>
 
 Board::Board() 
 {
@@ -31,6 +32,25 @@ void Board::DrawBoard(HWND hWnd,HDC hdc,RECT* rc, Gdiplus::Graphics* graphics)
 		DrawLine(hdc, rc->left, rc->top + CELL_SIZE * i, rc->right, rc->top + CELL_SIZE * i);
 	}
 	DrawGemColor(rc, graphics);
+}
+
+void Board::DrawScoreTurns(Gdiplus::Graphics* graphics, Gdiplus::Font* font, Gdiplus::Brush* brush)
+{
+	Gdiplus::PointF scoreP(0, 0);
+	Gdiplus::PointF turnsP(0, 80);
+	Gdiplus::PointF levelP(0, 160);
+
+	std::string score = "Score: " + std::to_string(scoreM.GetScore())+ " ";
+	std::string turnos = "Turnos: " + std::to_string(turnM.GetTurns())+" ";
+	std::string nivel = "Level: " + std::to_string(level)+" ";
+
+	std::wstring score_w = std::wstring(score.begin(), score.end());
+	std::wstring turnos_w = std::wstring(turnos.begin(), turnos.end());
+	std::wstring nivel_w = std::wstring(nivel.begin(), nivel.end());
+
+	graphics->DrawString(score_w.c_str(), 11, font, scoreP, brush);
+	graphics->DrawString(turnos_w.c_str(), 11, font, turnsP, brush);
+	graphics->DrawString(nivel_w.c_str(), 11, font, levelP, brush);
 }
 
 //Dibuja un sprite específico dependiendo el tipo de gema alojado en una cada casilla
@@ -87,6 +107,18 @@ void Board::DrawGemColor(RECT* rc, Gdiplus::Graphics* graphics)
 			gem = 0;
 			delete gem;
 		}
+}
+
+void Board::DrawGameOver(Gdiplus::Graphics* graphics, Gdiplus::Font* font, Gdiplus::Brush* brush)
+{
+	Gdiplus::Bitmap bmp(L"gameover.png");
+	graphics->DrawImage(&bmp, 0, 0, 800, 600);
+
+	Gdiplus::PointF scoreP(340, 370);
+	std::string score = std::to_string(scoreM.GetScore()) +"     " ;
+	std::wstring score_w = std::wstring(score.begin(), score.end());
+	graphics->DrawString(score_w.c_str(), 20, font, scoreP, brush);
+
 }
 
 BOOL Board::GetGameBoardRect(HWND hWnd, RECT* pRect)
@@ -174,17 +206,26 @@ Gem* Board::GetGemAt(int x, int y)
 //Devuelve un contenedor secuencial que incluye a todas las gemas
 //iguales adyacentes a la gema en x , y ¿Se entiende?
 template <class CONTAINER>
-CONTAINER Board::GetPartnerGems(int x, int y)
+CONTAINER Board::GetHorizontalPartnerGems(int x, int y)
 {
 	CONTAINER tmp;
-	LookForPartners<CONTAINER>(x, y, &tmp);
+	LookForHorizontalPartners<CONTAINER>(x, y, &tmp);
+	UnSeeGems();
+	return tmp;
+}
+
+template <class CONTAINER>
+CONTAINER Board::GetVerticalPartnerGems(int x, int y)
+{
+	CONTAINER tmp;
+	LookForVerticalPartners<CONTAINER>(x, y, &tmp);
 	UnSeeGems();
 	return tmp;
 }
 
 //Busca todos los vecinos del mismo tipo y los guarda en un contenedor secuencial
 template <class CONTAINER>
-void Board::LookForPartners(int x , int y, CONTAINER* partners)
+void Board::LookForHorizontalPartners(int x , int y, CONTAINER* partners)
 {
 	if(x >= 0 && y >= 0)
 		if (x < CELL_COUNT && y < CELL_COUNT)
@@ -200,28 +241,14 @@ void Board::LookForPartners(int x , int y, CONTAINER* partners)
 					{
 						if (*gem == *GetGemAt(x + 1, y))
 						{
-							LookForPartners(x + 1, y, partners);
-						}
-					}
-					if (y + 1 < CELL_COUNT)
-					{
-						if (*gem == *GetGemAt(x, y + 1))
-						{
-							LookForPartners(x, y + 1, partners);
+							LookForHorizontalPartners(x + 1, y, partners);
 						}
 					}
 					if (x - 1 >= 0)
 					{
 						if (*gem == *GetGemAt(x - 1, y))
 						{
-							LookForPartners(x - 1, y, partners);
-						}
-					}
-					if (y - 1 >= 0)
-					{
-						if (*gem == *GetGemAt(x, y - 1))
-						{
-							LookForPartners(x, y - 1, partners);
+							LookForHorizontalPartners(x - 1, y, partners);
 						}
 					}
 				}
@@ -229,6 +256,46 @@ void Board::LookForPartners(int x , int y, CONTAINER* partners)
 				delete gem;
 			}
 			catch (std::exception& e)
+			{
+				e.what();
+			}
+
+		}
+
+}
+
+template <class CONTAINER>
+void Board::LookForVerticalPartners(int x, int y, CONTAINER* partners)
+{
+	if (x >= 0 && y >= 0)
+		if (x < CELL_COUNT && y < CELL_COUNT)
+		{
+			try
+			{
+				Gem* gem = GetGemAt(x, y);
+				if (!gem->Visited())
+				{
+					gem->SetVisited(true);
+					partners->push_back(gem);
+					if (y + 1 < CELL_COUNT)
+					{
+						if (*gem == *GetGemAt(x, y + 1))
+						{
+							LookForVerticalPartners(x, y + 1, partners);
+						}
+					}
+					if (y - 1 >= 0)
+					{
+						if (*gem == *GetGemAt(x, y - 1))
+						{
+							LookForVerticalPartners(x, y - 1, partners);
+						}
+					}
+				}
+				gem = 0;
+				delete gem;
+			}
+			catch (std::exception & e)
 			{
 				e.what();
 			}
@@ -292,7 +359,7 @@ void Board::MoveGems(int x, int y, int i)
 		}
 }
 
-//Cuenta la cantidad de Gems vacias hay sobre una posición
+//Cuenta la cantidad de Gems vacias que hay sobre una posición
 int Board::EmptyNeighboards(int x, int y)
 {
 	if (y >= 0 && y < CELL_COUNT)
@@ -312,6 +379,18 @@ void Board::GenerateNewLevel()
 		{
 			GetGemAt(x,y)->GenerateNewType();
 		}
+
+	for (int x = 0; x < CELL_COUNT; x += 2)
+		for (int y = 0; y < CELL_COUNT; y++)
+		{
+			GenerateNewGem(GetGemAt(x, y));
+		}
+	for (int x = 1; x < CELL_COUNT; x += 2)
+		for (int y = 0; y < CELL_COUNT; y++)
+		{
+			GenerateNewGem(GetGemAt(x, y));
+		}
+
 }
 
 //Lógica de un turno
@@ -337,11 +416,38 @@ void Board::PlayerMove(vector<int>* moves)
 			*gem1 >> gem2;
 
 
-			list<Gem*> gemsi = GetPartnerGems<list<Gem*>>(c1X, c1Y);
+			list<Gem*> gemsH = GetHorizontalPartnerGems<list<Gem*>>(c1X, c1Y);
+			list<Gem*> gemsV = GetVerticalPartnerGems<list<Gem*>>(c1X, c1Y);
+
+			list<Gem*> gemsi;
+
+
+
+			if (gemsH.size() >= 3)
+			{
+				for (auto tmpgem : gemsH)
+					gemsi.push_back(tmpgem);
+			}
+
+			if (gemsV.size() >= 3)
+			{
+				for (auto tmpgem : gemsV)
+					gemsi.push_back(tmpgem);
+			}
+
 			if (gemsi.size() >= 3)
+			{
 				DestoyGems<list<Gem*>>(&gemsi);
+				hasDestroyed = true;
+			}
 			else
+			{
 				*gem1 >> gem2;
+			}
+
+			AfterPlayCollisions();
+			turnM.NextTurn();
+			LevelConditions();
 			//DestoyGems(c2X, c2Y, gem1, gem2);
 		}
 
@@ -349,6 +455,8 @@ void Board::PlayerMove(vector<int>* moves)
 		gem2 = 0;
 		delete gem1;
 		delete gem2;
+
+
 	}
 
 
@@ -372,6 +480,8 @@ void Board::DestoyGems(CONTAINER* container)
 		}
 	}
 
+	scoreM.AddScore(container->size());
+
 }
 
 //Coloca a todas las gemas como "No visitadas"
@@ -383,10 +493,10 @@ void Board::UnSeeGems()
 }
 
 //Evita la generación de gemas contiguas repetidas en más de 3
-//No funciona la chingadera ;-;
+//No funciona la chingadera ;-; // Edit: ya sirve :)
 void Board::GenerateNewGem(Gem* gem)
 {
-	int tmp = 0;
+	int tmp = 1;
 	gem->GenerateNewType();
 
 	int x = gem->GetX();
@@ -430,5 +540,79 @@ void Board::CallPower(HWND hWnd,int rawX, int rawY)
 	int y = index / CELL_COUNT;
 
 	PowerUp::Bomb(x, y, 1,this);
+	turnM.SetTurns(turnM.GetTurns() + 4);
+	LevelConditions();
 
+}
+
+//Revisa si hay gemas juntas después de una jugada y las elimina
+void Board::AfterPlayCollisions()
+{
+	if (hasDestroyed)
+	{
+		hasDestroyed = false;
+		for (int x = 0; x < CELL_COUNT; x ++)
+			for (int y = 0; y < CELL_COUNT; y++)
+			{
+				list<Gem*> gemsH = GetHorizontalPartnerGems<list<Gem*>>(x, y);
+				list<Gem*> gemsV = GetVerticalPartnerGems<list<Gem*>>(x, y);
+
+				list<Gem*> gemsi;
+
+				if (gemsH.size() >= 3)
+				{
+					for (auto tmpgem : gemsH)
+						gemsi.push_back(tmpgem);
+				}
+
+				if (gemsV.size() >= 3)
+				{
+					for (auto tmpgem : gemsV)
+						gemsi.push_back(tmpgem);
+				}
+
+				if (gemsi.size() >= 3)
+				{
+					DestoyGems<list<Gem*>>(&gemsi);
+					hasDestroyed = true;
+				}
+			}
+		AfterPlayCollisions();
+	}
+
+}
+
+bool Board::HasDestoyed()
+{
+	return hasDestroyed;
+}
+
+void Board::SetHasDestroyed(bool value)
+{
+	hasDestroyed = value;
+}
+
+void Board::LevelConditions()
+{
+	if (scoreM.GetScore() >= scoreToMatch*level)
+	{
+		level += 1;
+		turnM.Reset();
+		GenerateNewLevel();
+	}
+
+	if (turnM.GetTurns() >= turnLimit)
+	{
+		gameOver = true;
+	}
+
+}
+
+void Board::FullReset()
+{
+	level = 1;
+	scoreM.ResetScore();
+	turnM.Reset();
+	GenerateNewLevel();
+	gameOver = false;
 }

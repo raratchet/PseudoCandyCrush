@@ -157,14 +157,20 @@
     <ClInclude Include="Gem.h" />
     <ClInclude Include="PowerUp.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="ScoreManager.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TicTacToe.h" />
+    <ClInclude Include="TopScoreManager.h" />
+    <ClInclude Include="TurnManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Board.cpp" />
     <ClCompile Include="Gem.cpp" />
     <ClCompile Include="PowerUp.cpp" />
+    <ClCompile Include="ScoreManager.cpp" />
     <ClCompile Include="TicTacToe.cpp" />
+    <ClCompile Include="TopScoreManager.cpp" />
+    <ClCompile Include="TurnManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TicTacToe.rc" />

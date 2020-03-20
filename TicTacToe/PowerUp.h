@@ -10,6 +10,8 @@ public:
 	{
 		std::vector<Gem*> tmp = gBoard->GetGemsInRadius<std::vector<Gem*>>(x, y, radius);
 		gBoard->DestoyGems<std::vector<Gem*>>(&tmp);
+		gBoard->SetHasDestroyed(true);
+		gBoard->AfterPlayCollisions(); 
 	}
 };
 

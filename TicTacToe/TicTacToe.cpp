@@ -15,13 +15,19 @@
 
 // Variables globales:
 HINSTANCE hInst;                                // instancia actual
-WCHAR szTitle[MAX_LOADSTRING];                  // Texto de la barra de título
-WCHAR szWindowClass[MAX_LOADSTRING];            // nombre de clase de la ventana principal
+WCHAR GAME_NAME[] = L"PSEUDOCANDYCRUSH";                  // Texto de la barra de título
+WCHAR MENU_CLASS_NAME[] = L"Menu";
+WCHAR GAME_CLASS_NAME[] = L"PSEUDOCANDYCRUSH";            // nombre de clase de la ventana principal
+
+HWND button, button2;
 
 // Declaraciones de funciones adelantadas incluidas en este módulo de código:
-ATOM                MyRegisterClass(HINSTANCE hInstance);
-BOOL                InitInstance(HINSTANCE, int);
-LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
+ATOM                GameRegisterClass(HINSTANCE hInstance);
+ATOM                MenuRegisterClass(HINSTANCE hInstance);
+BOOL                InitGame(HINSTANCE, int);
+BOOL                InitMenu(HINSTANCE, int);
+LRESULT CALLBACK    Game(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK    Menu(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -35,9 +41,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	// TODO: Colocar código aquí.
 
 	// Inicializar cadenas globales
-	LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-	LoadStringW(hInstance, IDC_TICTACTOE, szWindowClass, MAX_LOADSTRING);
-	MyRegisterClass(hInstance);
+	LoadStringW(hInstance, IDS_APP_TITLE, GAME_NAME, MAX_LOADSTRING);
+	LoadStringW(hInstance, IDC_TICTACTOE, MENU_CLASS_NAME, MAX_LOADSTRING);
+	GameRegisterClass(hInstance);
+	MenuRegisterClass(hInstance);
 
 
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
@@ -45,7 +52,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr);
 
 	// Realizar la inicialización de la aplicación:
-	if (!InitInstance(hInstance, nCmdShow))
+	if (!InitMenu(hInstance, nCmdShow))
 	{
 		return FALSE;
 	}
@@ -69,31 +76,48 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 
 
-//
-//  FUNCIÓN: MyRegisterClass()
-//
-//  PROPÓSITO: Registra la clase de ventana.
-//
-ATOM MyRegisterClass(HINSTANCE hInstance)
+ATOM GameRegisterClass(HINSTANCE hInstance)
 {
-	WNDCLASSEXW wcex;
+	WNDCLASSEXW game;
 
-	wcex.cbSize = sizeof(WNDCLASSEX);
+	game.cbSize = sizeof(WNDCLASSEX);
 
-	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc = WndProc;
-	wcex.cbClsExtra = 0;
-	wcex.cbWndExtra = 0;
-	wcex.hInstance = hInstance;
-	wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_TICTACTOE));
-	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	game.style = CS_HREDRAW | CS_VREDRAW;
+	game.lpfnWndProc = Game;
+	game.cbClsExtra = 0;
+	game.cbWndExtra = 0;
+	game.hInstance = hInstance;
+	game.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_TICTACTOE));
+	game.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	//wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-	wcex.hbrBackground = (HBRUSH)GetStockObject(GRAY_BRUSH);
-	wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_TICTACTOE);
-	wcex.lpszClassName = szWindowClass;
-	wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+	game.hbrBackground = (HBRUSH)GetStockObject(GRAY_BRUSH);
+	game.lpszMenuName = MAKEINTRESOURCEW(IDC_TICTACTOE);
+	game.lpszClassName = GAME_CLASS_NAME;
+	game.hIconSm = LoadIcon(game.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
-	return RegisterClassExW(&wcex);
+	return RegisterClassExW(&game);
+}
+
+ATOM MenuRegisterClass(HINSTANCE hInstance)
+{
+	WNDCLASSEXW menu;
+
+	menu.cbSize = sizeof(WNDCLASSEX);
+
+	menu.style = CS_HREDRAW | CS_VREDRAW;
+	menu.lpfnWndProc = Menu;
+	menu.cbClsExtra = 0;
+	menu.cbWndExtra = 0;
+	menu.hInstance = hInstance;
+	menu.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_TICTACTOE));
+	menu.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	//wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
+	menu.hbrBackground = (HBRUSH)GetStockObject(GRAY_BRUSH);
+	menu.lpszMenuName = MAKEINTRESOURCEW(IDC_TICTACTOE);
+	menu.lpszClassName = MENU_CLASS_NAME;
+	menu.hIconSm = LoadIcon(menu.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+
+	return RegisterClassExW(&menu);
 }
 
 //
@@ -106,12 +130,30 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //        En esta función, se guarda el identificador de instancia en una variable común y
 //        se crea y muestra la ventana principal del programa.
 //
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
+BOOL InitGame(HINSTANCE hInstance, int nCmdShow)
 {
 	hInst = hInstance; // Almacenar identificador de instancia en una variable global
 
-	HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+	HWND hWnd = CreateWindowW(GAME_CLASS_NAME, GAME_NAME, WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+
+	if (!hWnd)
+	{
+		return FALSE;
+	}
+
+	ShowWindow(hWnd, nCmdShow);
+	UpdateWindow(hWnd);
+
+	return TRUE;
+}
+
+BOOL InitMenu(HINSTANCE hInstance, int nCmdShow)
+{
+	hInst = hInstance; // Almacenar identificador de instancia en una variable global
+
+	HWND hWnd = CreateWindowW(MENU_CLASS_NAME, GAME_NAME, WS_OVERLAPPEDWINDOW,
+		CW_USEDEFAULT, 0, 800, 600, nullptr, nullptr, hInstance, nullptr);
 
 	if (!hWnd)
 	{
@@ -139,7 +181,7 @@ vector<int> moves;
 //  WM_DESTROY  - publicar un mensaje de salida y volver
 //
 //
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK Game(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
@@ -160,14 +202,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 	}
 	break;
-	case WM_CREATE:
-	{
-		//brush = CreateSolidBrush(RGB(0,0,0));
-		// carga de los íconos
-		//cerdo = LoadIcon(hInst, MAKEINTRESOURCE(CERDO));
-		//gasho = LoadIcon(hInst, MAKEINTRESOURCE(GASHO));
-	}
-	break;
 	case WM_LBUTTONDOWN:
 	{
 		short xPos = GET_X_LPARAM(lParam);
@@ -185,7 +219,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				if (moves.size() >= 2)
 				{
 					gameB.PlayerMove(&moves);
-					InvalidateRect(hWnd, nullptr, false);
+					InvalidateRect(hWnd, nullptr, true);
 				}
 
 			}
@@ -208,7 +242,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			{
 
 				gameB.CallPower(hWnd,xPos,yPos);
-				InvalidateRect(hWnd, nullptr, false);
+				InvalidateRect(hWnd, nullptr, true);
 
 			}
 			ReleaseDC(hWnd, hdc);
@@ -219,6 +253,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		if (GetKeyState(VK_RETURN))
 		{
+			gameB.FullReset();
+			InvalidateRect(hWnd, nullptr, true);
 		}
 	}
 	break;
@@ -240,8 +276,111 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		RECT rc;
 
 		Gdiplus::Graphics gf(hdc);
+		Gdiplus::Font font(L"Arial", 16);
 
-		gameB.DrawBoard(hWnd,hdc,&rc,&gf);
+		Gdiplus::SolidBrush brush(Gdiplus::Color(0, 0, 0));
+		if (!gameB.gameOver)
+		{
+			gameB.DrawBoard(hWnd,hdc,&rc,&gf);
+			gameB.DrawScoreTurns(&gf, &font, &brush); 
+		}
+		else
+		{
+			Gdiplus::Font fontW(L"Arial", 35);
+			Gdiplus::SolidBrush wbrush(Gdiplus::Color(255, 255, 255));
+			gameB.DrawGameOver(&gf, &font, &wbrush);
+		}
+
+		EndPaint(hWnd, &ps);
+	}
+	break;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+	default:
+		return DefWindowProc(hWnd, message, wParam, lParam);
+	}
+	return 0;
+}
+
+LRESULT CALLBACK Menu(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+
+	switch (message)
+	{
+	case WM_CREATE:
+	{
+		button = CreateWindow(L"BUTTON", L"Start Game", WS_VISIBLE | WS_CHILD | WS_BORDER, 110, 400, 200, 20, hWnd, (HMENU)1, NULL, NULL);
+		button2 = CreateWindow(L"BUTTON", L"Close Game", WS_VISIBLE | WS_CHILD | WS_BORDER, 110, 420, 200, 20, hWnd, (HMENU)2, NULL, NULL);
+	}
+	break;
+	case WM_COMMAND:
+	{
+		int wmId = LOWORD(wParam);
+		// Analizar las selecciones de menú:
+		switch (wmId)
+		{
+		case 1:
+		{
+			button = false;
+			HWND hwnd = CreateWindow(GAME_CLASS_NAME,
+				GAME_NAME,
+				WS_OVERLAPPEDWINDOW,
+				CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
+				nullptr,
+				nullptr,
+				hInst,
+				0);
+			ShowWindow(hwnd, SW_NORMAL);
+			UpdateWindow(hwnd);
+
+		}
+		break;
+		case 2:
+		{
+			DestroyWindow(hWnd);
+		}
+		break;
+
+		case IDM_ABOUT:
+			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+			break;
+		case IDM_EXIT:
+			DestroyWindow(hWnd);
+			break;
+		default:
+			return DefWindowProc(hWnd, message, wParam, lParam);
+		}
+	}
+	break;
+	case WM_KEYDOWN:
+	{
+		if (GetKeyState(VK_RETURN))
+		{
+			HWND hwnd = CreateWindow(GAME_CLASS_NAME,
+				GAME_NAME,
+				WS_OVERLAPPEDWINDOW,
+				CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
+				nullptr,
+				nullptr,
+				hInst,
+				0);
+			ShowWindow(hwnd, SW_NORMAL);
+			UpdateWindow(hwnd);
+		}
+	}
+	break;
+	case WM_PAINT:
+	{
+		PAINTSTRUCT ps;
+		HDC hdc = BeginPaint(hWnd, &ps);
+		// TODO: Agregar cualquier código de dibujo que use hDC aquí...
+		RECT rc;
+
+		Gdiplus::Graphics gf(hdc);
+		Gdiplus::Bitmap bmp(L"start.png");
+
+		gf.DrawImage(&bmp, 0, 0,800,600);
 
 		EndPaint(hWnd, &ps);
 	}
